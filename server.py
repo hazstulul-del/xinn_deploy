@@ -15,7 +15,7 @@ app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_USERNAME = "hazstulul-del"
-REPO_NAME = "xin-deploy-sites"
+REPO_NAME = "xinn_deploy"
 
 GITHUB_API = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents"
 HEADERS = {
