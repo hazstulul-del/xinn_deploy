@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-XINN DEPLOY V3 — Versi Stabil (No Crash)
-Penyimpanan: GitHub API (permanen)
+XINN DEPLOY V3 — Fixed Version
 """
 
 from flask import Flask, render_template_string, request, jsonify
@@ -14,12 +13,9 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
-# ================== KONFIGURASI ==================
-# AMBIL DARI ENVIRONMENT VARIABLE (RAILWAY)
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "ISI_DISINI_KALO_LOKAL")
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_USERNAME = "hazstulul-del"
-REPO_NAME = "xin-deploy-sites"
-# =================================================
+REPO_NAME = "xinn_deploy"
 
 GITHUB_API = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents"
 HEADERS = {
@@ -27,7 +23,6 @@ HEADERS = {
     "Accept": "application/vnd.github.v3+json"
 }
 
-# ==================== HTML TEMPLATE ====================
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html lang="id">
@@ -51,8 +46,6 @@ HTML_TEMPLATE = '''
                 radial-gradient(ellipse at 80% 20%, rgba(63,185,80,0.05) 0%, transparent 70%);
         }
         .container { max-width: 800px; margin: 0 auto; }
-
-        /* HEADER */
         .header { text-align: center; margin-bottom: 24px; }
         .header-badge {
             display: inline-block; background: rgba(88,166,255,0.1);
@@ -67,16 +60,12 @@ HTML_TEMPLATE = '''
         }
         .header .by { color: var(--text2); font-size: 0.9rem; }
         .header .by span { color: var(--accent); font-weight: 600; }
-
-        /* BANNER */
         .banner {
             border-radius: 12px; overflow: hidden; margin-bottom: 24px;
             border: 2px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,0.5);
             max-height: 250px;
         }
         .banner img { width: 100%; display: block; object-fit: cover; }
-
-        /* GRID LAYOUT */
         .main-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -86,8 +75,6 @@ HTML_TEMPLATE = '''
         @media (max-width: 700px) {
             .main-grid { grid-template-columns: 1fr; }
         }
-
-        /* CARD */
         .card {
             background: var(--card); border: 1px solid var(--border);
             border-radius: 12px; padding: 20px;
@@ -101,8 +88,6 @@ HTML_TEMPLATE = '''
             border-radius: 6px; display: flex; align-items: center;
             justify-content: center; font-size: 0.9rem;
         }
-
-        /* FORM */
         .form-group { margin-bottom: 14px; }
         .form-group label {
             display: block; font-size: 0.8rem; font-weight: 500;
@@ -125,7 +110,7 @@ HTML_TEMPLATE = '''
             display: flex; align-items: center; gap: 8px;
             padding: 12px 14px; background: var(--bg);
             border: 2px dashed var(--border); border-radius: 8px;
-            cursor: pointer; justify-content: center; font-size: 0.85rem; transition: 0.2s;
+            cursor: pointer; justify-content: center; font-size: 0.85rem;
         }
         .file-upload-label:hover { border-color: var(--accent); }
         .file-name {
@@ -151,8 +136,6 @@ HTML_TEMPLATE = '''
             margin-right: 6px; vertical-align: middle;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* RESULT */
         .result {
             border-radius: 8px; padding: 12px; display: none; margin-top: 10px;
             text-align: center; font-size: 0.85rem; animation: fadeIn 0.3s ease;
@@ -161,41 +144,29 @@ HTML_TEMPLATE = '''
         .result.success { background: rgba(63,185,80,0.1); border: 1px solid rgba(63,185,80,0.4); color: var(--green); }
         .result.error { background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.4); color: var(--danger); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* RIWAYAT DEPLOY */
         .history-list { max-height: 350px; overflow-y: auto; }
         .history-item {
             display: flex; align-items: center; justify-content: space-between;
             padding: 12px 14px; border-bottom: 1px solid var(--border);
-            transition: 0.2s; gap: 10px;
         }
         .history-item:last-child { border-bottom: none; }
-        .history-item:hover { background: rgba(88,166,255,0.03); }
         .history-info { flex: 1; min-width: 0; }
         .history-name {
             font-weight: 600; font-size: 0.9rem; color: var(--accent);
             text-decoration: none;
         }
-        .history-name:hover { text-decoration: underline; }
-        .history-time {
-            font-size: 0.7rem; color: var(--text2); margin-top: 2px;
-        }
+        .history-time { font-size: 0.7rem; color: var(--text2); margin-top: 2px; }
         .history-badge {
             background: rgba(63,185,80,0.15); color: var(--green);
             padding: 3px 10px; border-radius: 12px; font-size: 0.7rem;
-            white-space: nowrap;
         }
-        .empty-history {
-            text-align: center; padding: 40px 20px; color: var(--text2);
-        }
+        .empty-history { text-align: center; padding: 40px 20px; color: var(--text2); }
         .empty-history .icon-big { font-size: 3rem; margin-bottom: 12px; }
         .count-badge {
             background: var(--accent); color: #fff;
             padding: 2px 8px; border-radius: 10px; font-size: 0.7rem;
             margin-left: 6px;
         }
-
-        /* RULES */
         .rules {
             background: var(--card); border: 1px solid var(--border);
             border-radius: 12px; padding: 14px 18px; margin-top: 16px;
@@ -204,39 +175,25 @@ HTML_TEMPLATE = '''
         .rules ul { list-style: none; font-size: 0.78rem; color: var(--text2); }
         .rules ul li { padding: 3px 0; display: flex; align-items: flex-start; gap: 6px; }
         .rules ul li::before { content: "•"; color: var(--accent); }
-
-        /* CONTACT */
-        .contact {
-            display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap;
-        }
+        .contact { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
         .contact-btn {
             flex: 1; min-width: 130px; display: flex; align-items: center;
             justify-content: center; gap: 8px; padding: 12px;
             border-radius: 8px; text-decoration: none; font-size: 0.85rem;
-            font-weight: 500; border: 1px solid var(--border); transition: 0.2s;
+            font-weight: 500; border: 1px solid var(--border);
         }
         .contact-btn.wa {
             background: rgba(37,211,102,0.1); color: #25d366;
             border-color: rgba(37,211,102,0.3);
         }
-        .contact-btn.wa:hover {
-            background: rgba(37,211,102,0.2); box-shadow: 0 4px 16px rgba(37,211,102,0.2);
-        }
         .contact-btn.tg {
             background: rgba(0,136,204,0.1); color: #0088cc;
             border-color: rgba(0,136,204,0.3);
         }
-        .contact-btn.tg:hover {
-            background: rgba(0,136,204,0.2); box-shadow: 0 4px 16px rgba(0,136,204,0.2);
-        }
-
-        /* FOOTER */
         .footer-text {
             text-align: center; margin-top: 20px; font-size: 0.75rem; color: var(--text2);
         }
         .footer-text span { color: var(--accent); }
-
-        /* SCROLLBAR */
         .history-list::-webkit-scrollbar { width: 4px; }
         .history-list::-webkit-scrollbar-track { background: transparent; }
         .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
@@ -244,21 +201,15 @@ HTML_TEMPLATE = '''
 </head>
 <body>
     <div class="container">
-        <!-- HEADER -->
         <div class="header">
             <div class="header-badge">🚀 DEPLOY GRATIS V3</div>
             <h1>XINN DEPLOY</h1>
             <p class="by">Deploy Website by <span>XINN</span></p>
         </div>
-
-        <!-- BANNER -->
         <div class="banner">
             <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3c4eG5mNnR5eG1hZ3QwcmZ4d2t2cXBnb3h6eTJpZ3JzOGJkYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26tn33aiTi1jkl6H6/giphy.gif" alt="Banner" loading="lazy">
         </div>
-
-        <!-- MAIN GRID -->
         <div class="main-grid">
-            <!-- KOLOM KIRI: FORM DEPLOY -->
             <div class="card">
                 <div class="card-title">
                     <span class="icon">📄</span> Upload File HTML
@@ -287,8 +238,6 @@ HTML_TEMPLATE = '''
                     <div id="resultMsg" style="font-size:0.8rem; margin-top:4px;"></div>
                 </div>
             </div>
-
-            <!-- KOLOM KANAN: RIWAYAT DEPLOY -->
             <div class="card">
                 <div class="card-title">
                     <span class="icon">🕐</span> Riwayat Deploy
@@ -303,8 +252,6 @@ HTML_TEMPLATE = '''
                 </div>
             </div>
         </div>
-
-        <!-- RULES -->
         <div class="rules">
             <h4>📌 Syarat & Ketentuan</h4>
             <ul>
@@ -314,8 +261,6 @@ HTML_TEMPLATE = '''
                 <li>Maksimal ukuran file: <strong>5 MB</strong>.</li>
             </ul>
         </div>
-
-        <!-- CONTACT -->
         <div class="contact">
             <a href="https://wa.me/6283175050030?text=Halo%20XINN,%20saya%20butuh%20bantuan%20deploy." target="_blank" class="contact-btn wa">
                 💬 WhatsApp – 083175050030
@@ -324,16 +269,12 @@ HTML_TEMPLATE = '''
                 ✈️ Telegram – @xinn_93
             </a>
         </div>
-
-        <!-- FOOTER -->
         <p class="footer-text">Credit by <span>XINN</span> • Deploy Website Gratis © 2024 • V3</p>
     </div>
-
     <script>
         const fileInput = document.getElementById("fileInput");
         const uploadText = document.getElementById("uploadText");
         const fileName = document.getElementById("fileName");
-
         fileInput.addEventListener("change", function() {
             if (this.files.length > 0) {
                 uploadText.textContent = this.files[0].name;
@@ -345,10 +286,7 @@ HTML_TEMPLATE = '''
                 fileName.style.color = "#8b949e";
             }
         });
-
-        // Load riwayat saat halaman dibuka
         loadHistory();
-
         document.getElementById("deployForm").addEventListener("submit", async function(e) {
             e.preventDefault();
             const btn = document.getElementById("deployBtn");
@@ -356,26 +294,20 @@ HTML_TEMPLATE = '''
             const resultIcon = document.getElementById("resultIcon");
             const resultTitle = document.getElementById("resultTitle");
             const resultMsg = document.getElementById("resultMsg");
-
             resultBox.className = "result";
             resultBox.style.display = "none";
-
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner"></span> Deploying...';
-
             const formData = new FormData(this);
             try {
                 const response = await fetch("/deploy", { method: "POST", body: formData });
                 const data = await response.json();
-                
                 if (data.status === "success") {
                     resultBox.classList.add("show", "success");
                     resultIcon.textContent = "✅";
                     resultTitle.innerHTML = '<a href="' + data.url + '" target="_blank" style="color:#3fb950;">' + data.url + '</a>';
                     resultMsg.textContent = 'Website berhasil dideploy!';
-                    // Refresh riwayat
                     loadHistory();
-                    // Reset form
                     document.getElementById("deployForm").reset();
                     uploadText.textContent = "Pilih File HTML";
                     fileName.textContent = "Tidak ada file yang dipilih";
@@ -393,15 +325,12 @@ HTML_TEMPLATE = '''
             btn.disabled = false;
             btn.innerHTML = "🚀 Deploy Sekarang";
         });
-
         async function loadHistory() {
             try {
                 const response = await fetch("/history");
                 const data = await response.json();
-                
                 const historyList = document.getElementById("historyList");
                 const historyCount = document.getElementById("historyCount");
-                
                 if (data.history && data.history.length > 0) {
                     historyCount.textContent = data.history.length;
                     historyList.innerHTML = data.history.map((item, index) => `
@@ -434,8 +363,6 @@ HTML_TEMPLATE = '''
 </html>
 '''
 
-# ==================== ROUTES ====================
-
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE)
@@ -445,33 +372,70 @@ def deploy():
     site_name = request.form.get('site_name', '').strip()
     if not site_name:
         return jsonify({'status': 'error', 'message': 'Nama website wajib diisi!'})
-    
     safe_name = ''.join(c for c in site_name if c.isalnum() or c in '-_')
     if len(safe_name) < 3:
         return jsonify({'status': 'error', 'message': 'Nama minimal 3 karakter!'})
-    
     if 'html_file' not in request.files:
         return jsonify({'status': 'error', 'message': 'File HTML wajib diupload!'})
-    
     file = request.files['html_file']
     if file.filename == '':
         return jsonify({'status': 'error', 'message': 'File tidak boleh kosong!'})
-    
     if not file.filename.lower().endswith(('.html', '.htm')):
         return jsonify({'status': 'error', 'message': 'Format file harus .html!'})
-    
     try:
         html_content = file.read().decode('utf-8')
-        
-        # Upload HTML ke GitHub
         path_html = f"sites/{safe_name}/index.html"
         push_to_github(path_html, html_content, f"Deploy: {safe_name}")
-        
-        # Update riwayat
         history = get_history()
         history.insert(0, {
             "name": safe_name,
             "time": datetime.now().strftime("%d-%m-%Y %H:%M WIB"),
             "url": f"https://{GITHUB_USERNAME}.github.io/{REPO_NAME}/sites/{safe_name}/"
         })
-        # Simpan ma
+        history = history[:50]
+        push_to_github("history.json", json.dumps(history, indent=2, ensure_ascii=False), f"Update history: +{safe_name}")
+        public_url = f"https://{GITHUB_USERNAME}.github.io/{REPO_NAME}/sites/{safe_name}/"
+        return jsonify({
+            'status': 'success',
+            'message': f'Website "{safe_name}" berhasil dideploy!',
+            'url': public_url
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Server error: {str(e)}'})
+
+@app.route('/history')
+def history_route():
+    history = get_history()
+    return jsonify({'history': history})
+
+def push_to_github(path, content, commit_message):
+    url = f"{GITHUB_API}/{path}"
+    sha = None
+    check = requests.get(url, headers=HEADERS)
+    if check.status_code == 200:
+        sha = check.json().get("sha")
+    payload = {
+        "message": commit_message,
+        "content": base64.b64encode(content.encode('utf-8')).decode('utf-8'),
+        "branch": "main"
+    }
+    if sha:
+        payload["sha"] = sha
+    response = requests.put(url, headers=HEADERS, json=payload)
+    if response.status_code not in [200, 201]:
+        raise Exception(f"GitHub API Error: {response.json().get('message', 'Unknown error')}")
+    return response.json()
+
+def get_history():
+    try:
+        url = f"{GITHUB_API}/history.json"
+        response = requests.get(url, headers=HEADERS)
+        if response.status_code == 200:
+            content = base64.b64decode(response.json()["content"]).decode('utf-8')
+            return json.loads(content)
+        return []
+    except Exception:
+        return []
+
+def enable_github_pages():
+    url = f"https:/
