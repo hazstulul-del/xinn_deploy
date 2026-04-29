@@ -1,18 +1,23 @@
 #!/usr/bin/env python3
 """
 XINN DEPLOY - Backend Flask untuk Railway
+Banner: static/img/banner.gif (file lokal dari repo)
 """
 
-from flask import Flask, render_template_string, request, jsonify
+from flask import Flask, render_template_string, request, jsonify, send_from_directory
 import os
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # Maks 5MB
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
-# PAKAI /tmp/ karena Railway bisa tulis di folder ini
+# Folder deploy
 UPLOAD_FOLDER = '/tmp/deployed_sites'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Folder static/img buat banner.gif
+STATIC_IMG = os.path.join(os.path.dirname(__file__), 'static', 'img')
+os.makedirs(STATIC_IMG, exist_ok=True)
 
 # ==================== HTML TEMPLATE ====================
 HTML_TEMPLATE = '''
@@ -195,8 +200,9 @@ HTML_TEMPLATE = '''
             <p class="by">Deploy Website by <span>XINN</span></p>
         </div>
 
+        <!-- BANNER DARI FILE LOKAL -->
         <div class="banner">
-            <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3c4eG5mNnR5eG1hZ3QwcmZ4d2t2cXBnb3h6eTJpZ3JzOGJkYiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26tn33aiTi1jkl6H6/giphy.gif" alt="Banner" loading="lazy">
+            <img src="{{ url_for('static', filename='img/banner.gif') }}" alt="XINN DEPLOY Banner" loading="lazy">
         </div>
 
         <div class="card">
@@ -275,7 +281,6 @@ HTML_TEMPLATE = '''
 
         document.getElementById("deployForm").addEventListener("submit", async function(e) {
             e.preventDefault();
-
             const btn = document.getElementById("deployBtn");
             const resultBox = document.getElementById("resultBox");
             const resultIcon = document.getElementById("resultIcon");
@@ -292,16 +297,13 @@ HTML_TEMPLATE = '''
             btn.innerHTML = '<span class="spinner"></span> Deploying...';
 
             const formData = new FormData(this);
-
             try {
                 const response = await fetch("/deploy", { method: "POST", body: formData });
                 const data = await response.json();
-
                 if (data.status === "success") {
                     resultBox.classList.add("show", "success");
                     resultIcon.textContent = "✅";
                     resultTitle.textContent = "✔ Website Berhasil Dibuat!";
-                    resultMsg.textContent = "";
                     urlBox.style.display = "block";
                     deployedUrl.href = data.url;
                     deployedUrl.textContent = data.url;
@@ -317,7 +319,6 @@ HTML_TEMPLATE = '''
                 resultTitle.textContent = "Error!";
                 resultMsg.textContent = "Gagal terhubung ke server.";
             }
-
             btn.disabled = false;
             btn.innerHTML = "🚀 Deploy";
         });
@@ -330,10 +331,8 @@ HTML_TEMPLATE = '''
                 setTimeout(() => { btn.textContent = "📋 Copy URL"; }, 2000);
             }).catch(() => {
                 const ta = document.createElement("textarea");
-                ta.value = url;
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand("copy");
+                ta.value = url; document.body.appendChild(ta);
+                ta.select(); document.execCommand("copy");
                 document.body.removeChild(ta);
                 btn.textContent = "✅ Copied!";
                 setTimeout(() => { btn.textContent = "📋 Copy URL"; }, 2000);
@@ -352,18 +351,14 @@ def index():
 
 @app.route('/deploy', methods=['POST'])
 def deploy():
-    """Endpoint deploy - terima file HTML, simpan, kasih URL publik"""
-    
     site_name = request.form.get('site_name', '').strip()
     if not site_name:
         return jsonify({'status': 'error', 'message': 'Nama website wajib diisi!'})
     
-    # Sanitasi nama
     safe_name = ''.join(c for c in site_name if c.isalnum() or c in '-_')
     if len(safe_name) < 3:
         return jsonify({'status': 'error', 'message': 'Nama website minimal 3 karakter!'})
     
-    # Cek file
     if 'html_file' not in request.files:
         return jsonify({'status': 'error', 'message': 'File HTML wajib diupload!'})
     
@@ -371,19 +366,14 @@ def deploy():
     if file.filename == '':
         return jsonify({'status': 'error', 'message': 'File tidak boleh kosong!'})
     
-    # Validasi ekstensi
     if not file.filename.lower().endswith(('.html', '.htm')):
         return jsonify({'status': 'error', 'message': 'Format file harus .html atau .htm!'})
     
-    # Bikin folder untuk website ini
     site_folder = os.path.join(app.config['UPLOAD_FOLDER'], safe_name)
     os.makedirs(site_folder, exist_ok=True)
-    
-    # Simpan file sebagai index.html
     file_path = os.path.join(site_folder, 'index.html')
     file.save(file_path)
     
-    # Generate URL publik
     base_url = request.host_url.rstrip('/')
     public_url = f"{base_url}/site/{safe_name}"
     
@@ -395,7 +385,6 @@ def deploy():
 
 @app.route('/site/<site_name>')
 def serve_site(site_name):
-    """Melayani file HTML yang sudah dideploy"""
     safe_name = ''.join(c for c in site_name if c.isalnum() or c in '-_')
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_name, 'index.html')
     
@@ -405,7 +394,7 @@ def serve_site(site_name):
     else:
         return '''
         <!DOCTYPE html>
-        <html><head><title>404 - Not Found</title></head>
+        <html><head><title>404</title></head>
         <body style="background:#0d1117;color:#c9d1d9;text-align:center;padding-top:100px;font-family:sans-serif;">
             <h1 style="font-size:4rem;">404</h1>
             <p>Website tidak ditemukan.</p>
