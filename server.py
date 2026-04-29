@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""XINN DEPLOY V3 — Debug Ready"""
+"""XINN DEPLOY V3 — Fixed & Ready"""
 
 from flask import Flask, render_template, request, jsonify
 import requests
@@ -13,7 +13,7 @@ app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 GITHUB_USERNAME = "hazstulul-del"
-REPO_NAME = "xinn_deploy"
+REPO_NAME = "xin-deploy-sites"
 
 GITHUB_API = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents"
 HEADERS = {
@@ -30,20 +30,29 @@ def deploy():
     site_name = request.form.get('site_name', '').strip()
     if not site_name:
         return jsonify({'status': 'error', 'message': 'Nama website wajib diisi!'})
+    
     safe_name = ''.join(c for c in site_name if c.isalnum() or c in '-_')
     if len(safe_name) < 3:
         return jsonify({'status': 'error', 'message': 'Nama minimal 3 karakter!'})
+    
     if 'html_file' not in request.files:
         return jsonify({'status': 'error', 'message': 'File HTML wajib diupload!'})
+    
     file = request.files['html_file']
     if file.filename == '':
         return jsonify({'status': 'error', 'message': 'File tidak boleh kosong!'})
+    
     if not file.filename.lower().endswith(('.html', '.htm')):
         return jsonify({'status': 'error', 'message': 'Format file harus .html!'})
+    
     try:
         html_content = file.read().decode('utf-8')
+        
+        # Upload HTML ke GitHub
         path_html = f"sites/{safe_name}/index.html"
         push_to_github(path_html, html_content, f"Deploy: {safe_name}")
+        
+        # Update riwayat
         history = get_history()
         history.insert(0, {
             "name": safe_name,
@@ -52,12 +61,15 @@ def deploy():
         })
         history = history[:50]
         push_to_github("history.json", json.dumps(history, indent=2, ensure_ascii=False), f"Update history: +{safe_name}")
+        
         public_url = f"https://{GITHUB_USERNAME}.github.io/{REPO_NAME}/sites/{safe_name}/"
+        
         return jsonify({
             'status': 'success',
             'message': f'Website "{safe_name}" berhasil dideploy!',
             'url': public_url
         })
+        
     except Exception as e:
         return jsonify({'status': 'error', 'message': f'Server error: {str(e)}'})
 
