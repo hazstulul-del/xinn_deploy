@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-XINN DEPLOY V3 — Backend Saja
-"""
+"""XINN DEPLOY V3 — Debug Ready"""
 
 from flask import Flask, render_template, request, jsonify
 import requests
