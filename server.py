@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-XINN DEPLOY V3 — Deploy Website + Riwayat Deploy
+XINN DEPLOY V3 — Versi Stabil (No Crash)
 Penyimpanan: GitHub API (permanen)
 """
 
@@ -14,10 +14,11 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
-# ================== WAJIB DIISI! ==================
-GITHUB_TOKEN = "token lu"  # GANTI DENGAN TOKEN GITHUB LO!
-GITHUB_USERNAME = "hazstulul-del"           # Username GitHub lo
-REPO_NAME = "xinn_deploy"              # Repo penyimpanan
+# ================== KONFIGURASI ==================
+# AMBIL DARI ENVIRONMENT VARIABLE (RAILWAY)
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "ISI_DISINI_KALO_LOKAL")
+GITHUB_USERNAME = "hazstulul-del"
+REPO_NAME = "xin-deploy-sites"
 # =================================================
 
 GITHUB_API = f"https://api.github.com/repos/{GITHUB_USERNAME}/{REPO_NAME}/contents"
@@ -471,4 +472,6 @@ def deploy():
         history.insert(0, {
             "name": safe_name,
             "time": datetime.now().strftime("%d-%m-%Y %H:%M WIB"),
-            "url": f"https://{GITHUB_USERNAME}.github.io/{REPO_NAME}/sites/{safe_name}
+            "url": f"https://{GITHUB_USERNAME}.github.io/{REPO_NAME}/sites/{safe_name}/"
+        })
+        # Simpan ma
